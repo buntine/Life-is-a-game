@@ -14,25 +14,25 @@
 
 (require (lib "graphics.ss" "graphics"))
 
-(define *HORIZ_CELLS* 20)
-(define *VERT_CELLS* 10)
 (define *CELL_WIDTH* 5)
 (define *CELL_HEIGHT* 5)
 (define *REFRESH_RATE* .60)
 
-(define (game-width)
-  (* *HORIZ_CELLS* *CELL_WIDTH*))
+(define (frame-width rows)
+  (* rows *CELL_WIDTH*))
 
-(define (game-height)
-  (* *VERT_CELLS* *CELL_HEIGHT*))
+(define (frame-height cells)
+  (* cells *CELL_HEIGHT*))
 
 ;;; Initializes the graphics viewport.
-(define (initialize)
+(define (initialize rows cells)
   (open-graphics)
-  (open-viewport "Conway's Game of Life" (game-width) (game-height)))
+  (open-viewport "Conway's Game of Life"
+                 (frame-width rows)
+                 (frame-height cells)))
 
 ;;; Creates an initial seed pattern.
-(define (initial-seed)
+(define (initial-seed rows cells seed)
   (vector
     (make-vector 20 0)
     (vector 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0)
@@ -47,38 +47,39 @@
 
 ;;; Returns the next generation given the current state.
 (define (next-generation state)
-  (initial-seed))
+  (initial-seed 20 10 '((20 20))))
 
 ;;; Renders the universe, depicting the current state.
 (define (render-universe state vp)
   (r-u-helper state 0 0 vp))
 
 (define (r-u-helper state x y vp)
-  (cond ((>= y *VERT_CELLS*)
-          #t)
-        ((>= x *HORIZ_CELLS*)
-          (r-u-helper state 0 (+ y 1) vp))
-        (else
-          (let ((health (vector-ref
-                          (vector-ref state y)
-                          x)))
-            (if (= health 1)
-              (render-life x y vp)
-              (render-death x y vp))
-            (r-u-helper state (+ x 1) y vp)))))
+  (let ((rows (vector-length state))
+        (cells (vector-length (vector-ref state 0))))
+    (cond ((>= y rows)
+            #t)
+          ((>= x cells)
+            (r-u-helper state 0 (+ y 1) vp))
+          (else
+            (let ((health (vector-ref
+                            (vector-ref state y)
+                            x)))
+              (if (= health 1)
+                (render-cell 'life x y vp)
+                (render-cell 'death x y vp))
+              (r-u-helper state (+ x 1) y vp))))))
 
-(define (render-life x y vp)
-  (let ((posn (make-posn
-                (* *CELL_WIDTH* x)
-                (* *CELL_HEIGHT* y))))
-    ((draw-solid-rectangle vp) posn *CELL_WIDTH* *CELL_HEIGHT* "black")))
-
-(define (render-death x y vp)
-  (let ((posn (make-posn
-                (* *CELL_WIDTH* x)
-                (* *CELL_HEIGHT* y))))
-    ((draw-solid-rectangle vp) posn *CELL_WIDTH* *CELL_HEIGHT* "white")))
-
+;;; Renders a cell to be either alive or dead, depending
+;;; the the value of 'health'.
+(define (render-cell health x y vp)
+  (let* ((cw *CELL_WIDTH*)
+         (ch *CELL_HEIGHT*)
+         (color (if (equal? health 'life)
+                  "black"
+                  "white"))
+         (posn (make-posn (* cw x)
+                          (* ch y))))
+    ((draw-solid-rectangle vp) posn cw ch color)))
 
 ;;; Main game loop.
 (define (mainloop state vp)
@@ -87,5 +88,11 @@
     (sleep/yield *REFRESH_RATE*)
     (mainloop new-state vp)))
 
-(define (gol)
-  (mainloop (initial-seed) (initialize)))
+;;; Initialization procedure, accepts width, height and
+;;; an initial seed pattern in the form of a list of
+;;; two-element lists.
+;;;
+;;; Example: (gol 40 40 '((22 2) (23 2) (22 3) (23 3)))
+(define (gol rows cells seed)
+  (mainloop (initial-seed rows cells seed)
+            (initialize rows cells)))
