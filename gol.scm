@@ -33,21 +33,38 @@
 
 ;;; Creates an initial seed pattern.
 (define (initial-seed rows cells seed)
-  (vector
-    (make-vector 20 0)
-    (vector 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0)
-    (vector 0 0 0 0 0 0 0 0 0 0 0 0 0 0 1 1 0 0 0 0)
-    (vector 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-    (vector 0 0 0 0 1 1 0 0 0 0 0 0 0 0 0 0 0 0 0 0)
-    (make-vector 20 0)
-    (make-vector 20 0)
-    (make-vector 20 0)
-    (make-vector 20 0)
-    (make-vector 20 0)))
+  (build-grid (make-vector rows 0) cells 0 seed))
+
+;;; Builds the full grid as per the supplied
+;;; width, height and seed pattern.
+(define (build-grid rows cells curr-row seed)
+  (vector-set! rows
+               curr-row
+               (populate-row (make-vector cells 0)
+                             0
+                             curr-row
+                             seed))
+  (if (= (vector-length rows) (+ curr-row 1))
+    rows
+    (build-grid rows
+                cells
+                (+ curr-row 1)
+                seed)))
+
+;;; Populates a given row in the grid given
+;;; the initial seed pattern.
+(define (populate-row row curr-cell curr-row seed)
+  (if (= curr-cell (vector-length row))
+    row
+    (begin
+      (vector-set! row
+                   curr-cell
+                   (if (= curr-cell 5) 1 0))
+      (populate-row row (+ curr-cell 1) curr-row seed))))
 
 ;;; Returns the next generation given the current state.
 (define (next-generation state)
-  (initial-seed 20 10 '((20 20))))
+  (initial-seed 30 30 '((20 20))))
 
 ;;; Renders the universe, depicting the current state.
 (define (render-universe state vp)
@@ -61,9 +78,8 @@
           ((>= x cells)
             (r-u-helper state 0 (+ y 1) vp))
           (else
-            (let ((health (vector-ref
-                            (vector-ref state y)
-                            x)))
+            (let ((health (vector-ref (vector-ref state y)
+                                      x)))
               (if (= health 1)
                 (render-cell 'life x y vp)
                 (render-cell 'death x y vp))
