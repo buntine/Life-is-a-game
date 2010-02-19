@@ -16,7 +16,13 @@
 
 (define *CELL_WIDTH* 5)
 (define *CELL_HEIGHT* 5)
-(define *REFRESH_RATE* .100)
+(define *REFRESH_RATE* .250)
+
+(define (rows grid)
+  (vector-length grid))
+
+(define (cells grid)
+  (vector-length (vector-ref grid 0)))
 
 (define (frame-width rows)
   (* rows *CELL_WIDTH*))
@@ -64,7 +70,54 @@
 
 ;;; Returns the next generation given the current state.
 (define (next-generation state)
-  (initial-seed 30 30 '((20 20))))
+  (let ((rows (vector-length state))
+        (cells (vector-length (vector-ref state 0))))
+    (initial-seed rows
+                  cells
+                  (build-seed-pattern state))))
+
+;;; Builds a new seed pattern in relation to the current
+;;; state.
+(define (build-seed-pattern state)
+  (b-s-p-helper '() state 0 0))
+
+(define (b-s-p-helper seed state x y)
+  (cond ((and (= (+ y 1) (rows state))
+              (= x (cells state)))
+           seed)
+        ((= x (cells state))
+           (b-s-p-helper seed state 0 (+ y 1)))
+        (else
+          (let ((cell (fetch-cell state x y))
+               (neighbours (cell-neighbours state x y)))
+            (b-s-p-helper (cond ((and (> neighbours 3) (= cell 1)) seed)
+                                ((and (< neighbours 2) (= cell 1)) seed)
+                                ((and (>= neighbours 3) (= cell 0)) (cons (list x y) seed))
+                                ((and (> neighbours 1) (> 4 neighbours) (= cell 1)) (cons (list x y) seed))
+                                (else seed))
+                          state
+                          (+ x 1)
+                          y)))))
+
+;;; Returns the value of the cell at position x y
+;;; in the grid.
+(define (fetch-cell grid x y)
+  (if (or (< x 0) (< y 0) (>= x (cells grid)) (>= y (rows grid)))
+    0
+    (vector-ref (vector-ref grid y) x)))
+
+;;; Returns the number of live neighbours for the
+;;; cell at the given coordinates.
+(define (cell-neighbours grid x y)
+  (let ((neighbours (list (fetch-cell grid (- x 1) (- y 1))
+                    (fetch-cell grid x (- y 1))
+                    (fetch-cell grid (+ x 1) (- y 1))
+                    (fetch-cell grid (- x 1) (+ y 1))
+                    (fetch-cell grid x (+ y 1))
+                    (fetch-cell grid (+ x 1) (+ y 1))
+                    (fetch-cell grid (- x 1) y)
+                    (fetch-cell grid (+ x 1) y))))
+    (apply + neighbours)))
 
 ;;; Renders the universe, depicting the current state.
 (define (render-universe state vp)
