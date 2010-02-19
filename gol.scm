@@ -16,7 +16,7 @@
 
 (define *CELL_WIDTH* 5)
 (define *CELL_HEIGHT* 5)
-(define *REFRESH_RATE* .60)
+(define *REFRESH_RATE* .100)
 
 (define (frame-width rows)
   (* rows *CELL_WIDTH*))
@@ -59,7 +59,7 @@
     (begin
       (vector-set! row
                    curr-cell
-                   (if (= curr-cell 5) 1 0))
+                   (if (member (list curr-cell curr-row) seed) 1 0))
       (populate-row row (+ curr-cell 1) curr-row seed))))
 
 ;;; Returns the next generation given the current state.
@@ -99,10 +99,9 @@
 
 ;;; Main game loop.
 (define (mainloop state vp)
-  (let ((new-state (next-generation state)))
-    (render-universe new-state vp)
-    (sleep/yield *REFRESH_RATE*)
-    (mainloop new-state vp)))
+  (render-universe state vp)
+  (sleep/yield *REFRESH_RATE*)
+  (mainloop (next-generation state) vp))
 
 ;;; Initialization procedure, accepts width, height and
 ;;; an initial seed pattern in the form of a list of
