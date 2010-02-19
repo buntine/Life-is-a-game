@@ -12,38 +12,39 @@
 ;;;
 ;;; Read about it on Wikipedia: http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
+;;; TODO: Refactor cell-neighbours and b-s-p-helper
+;;;       Enable way to kill app and (close-graphics)
+
 (require (lib "graphics.ss" "graphics"))
 
 (define *CELL_WIDTH* 5)
 (define *CELL_HEIGHT* 5)
 (define *REFRESH_RATE* .250)
 
+;;; Given a grid, returns the number of available rows.
 (define (rows grid)
   (vector-length grid))
 
+;;; Given a grid, returns the number of available cells
+;;; per row.
 (define (cells grid)
   (vector-length (vector-ref grid 0)))
 
-(define (frame-width rows)
-  (* rows *CELL_WIDTH*))
-
-(define (frame-height cells)
-  (* cells *CELL_HEIGHT*))
-
 ;;; Initializes the graphics viewport.
-(define (initialize rows cells)
+(define (initialize cells rows)
   (open-graphics)
   (open-viewport "Conway's Game of Life"
-                 (frame-width rows)
-                 (frame-height cells)))
+                 (* cells *CELL_WIDTH*)
+                 (* rows *CELL_HEIGHT*)))
 
-;;; Creates an initial seed pattern.
-(define (initial-seed rows cells seed)
-  (build-grid (make-vector rows 0) cells 0 seed))
+;;; Creates a grid and populates it as per the given
+;;; seed pattern for the next evolution.
+(define (update-seed cells rows seed)
+  (build-grid cells (make-vector rows 0) 0 seed))
 
 ;;; Builds the full grid as per the supplied
 ;;; width, height and seed pattern.
-(define (build-grid rows cells curr-row seed)
+(define (build-grid cells rows curr-row seed)
   (vector-set! rows
                curr-row
                (populate-row (make-vector cells 0)
@@ -52,32 +53,25 @@
                              seed))
   (if (= (vector-length rows) (+ curr-row 1))
     rows
-    (build-grid rows
-                cells
-                (+ curr-row 1)
-                seed)))
+    (build-grid cells rows (+ curr-row 1) seed)))
 
 ;;; Populates a given row in the grid given
 ;;; the initial seed pattern.
 (define (populate-row row curr-cell curr-row seed)
   (if (= curr-cell (vector-length row))
     row
-    (begin
-      (vector-set! row
-                   curr-cell
-                   (if (member (list curr-cell curr-row) seed) 1 0))
+    (let ((health (if (member (list curr-cell curr-row) seed) 1 0)))
+      (vector-set! row curr-cell health)
       (populate-row row (+ curr-cell 1) curr-row seed))))
 
 ;;; Returns the next generation given the current state.
-(define (next-generation state)
-  (let ((rows (vector-length state))
-        (cells (vector-length (vector-ref state 0))))
-    (initial-seed rows
-                  cells
-                  (build-seed-pattern state))))
+(define (next-generation grid)
+  (update-seed (cells grid)
+               (rows grid)
+               (build-seed-pattern grid)))
 
 ;;; Builds a new seed pattern in relation to the current
-;;; state.
+;;; game state.
 (define (build-seed-pattern state)
   (b-s-p-helper '() state 0 0))
 
@@ -100,7 +94,7 @@
                           y)))))
 
 ;;; Returns the value of the cell at position x y
-;;; in the grid.
+;;; in the grid. If out-of-bounds, 0 is returned.
 (define (fetch-cell grid x y)
   (if (or (< x 0) (< y 0) (>= x (cells grid)) (>= y (rows grid)))
     0
@@ -120,30 +114,24 @@
     (apply + neighbours)))
 
 ;;; Renders the universe, depicting the current state.
-(define (render-universe state vp)
-  (r-u-helper state 0 0 vp))
+(define (render-universe grid vp)
+  (r-u-helper grid 0 0 vp))
 
-(define (r-u-helper state x y vp)
-  (let ((rows (vector-length state))
-        (cells (vector-length (vector-ref state 0))))
-    (cond ((>= y rows)
-            #t)
-          ((>= x cells)
-            (r-u-helper state 0 (+ y 1) vp))
-          (else
-            (let ((health (vector-ref (vector-ref state y)
-                                      x)))
-              (if (= health 1)
-                (render-cell 'life x y vp)
-                (render-cell 'death x y vp))
-              (r-u-helper state (+ x 1) y vp))))))
+(define (r-u-helper grid x y vp)
+  (cond ((>= y (rows grid)) #t)
+        ((>= x (cells grid))
+          (r-u-helper grid 0 (+ y 1) vp))
+        (else
+          (let ((health (fetch-cell grid x y)))
+            (render-cell health x y vp)
+            (r-u-helper grid (+ x 1) y vp)))))
 
 ;;; Renders a cell to be either alive or dead, depending
 ;;; the the value of 'health'.
 (define (render-cell health x y vp)
   (let* ((cw *CELL_WIDTH*)
          (ch *CELL_HEIGHT*)
-         (color (if (equal? health 'life)
+         (color (if (= health 1)
                   "black"
                   "white"))
          (posn (make-posn (* cw x)
@@ -151,16 +139,16 @@
     ((draw-solid-rectangle vp) posn cw ch color)))
 
 ;;; Main game loop.
-(define (mainloop state vp)
-  (render-universe state vp)
+(define (mainloop grid vp)
+  (render-universe grid vp)
   (sleep/yield *REFRESH_RATE*)
-  (mainloop (next-generation state) vp))
+  (mainloop (next-generation grid) vp))
 
 ;;; Initialization procedure, accepts width, height and
 ;;; an initial seed pattern in the form of a list of
 ;;; two-element lists.
 ;;;
 ;;; Example: (gol 40 40 '((22 2) (23 2) (22 3) (23 3)))
-(define (gol rows cells seed)
-  (mainloop (initial-seed rows cells seed)
-            (initialize rows cells)))
+(define (gol cells rows seed)
+  (mainloop (update-seed cells rows seed)
+            (initialize cells rows)))
