@@ -1,5 +1,5 @@
 Conway's Game of Life
-Andrew Buntine.
+By Andrew Buntine.
 
 Implemented in PLT Scheme and viewport over the course of a few warm
 Melbourne evenings, early 2010.
@@ -19,8 +19,12 @@ My implementation accepts:
  - cells: Number of cells per row
  - rows: Number of rows
  - seed: An initial pattern (a seed) as a list consisting
-         of a set of sublists, each containing cell x and
+         of a set of sublists, each containing a cell x and
          a row y.
+
+Usage:
+
+  (load "gol.scm")
 
   ; A three-cell oscillator.
   (gol 20 20 '((10 10) (11 10) (12 10)))
