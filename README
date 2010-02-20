@@ -1,0 +1,32 @@
+Conway's Game of Life
+Andrew Buntine.
+
+Implemented in PLT Scheme and viewport over the course of a few warm
+Melbourne evenings, early 2010.
+
+The Game of Life, also known simply as Life, is a cellular automaton
+devised by the British mathematician John Horton Conway in 1970. It is
+the best-known example of a cellular automaton.
+
+The "game" is a zero-player game, meaning that its evolution is determined
+by its initial state, requiring no further input from humans. One
+interacts with the Game of Life by creating an initial configuration
+and observing how it evolves.
+
+Read about it on Wikipedia: http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
+
+My implementation accepts:
+ - cells: Number of cells per row
+ - rows: Number of rows
+ - seed: An initial pattern (a seed) as a list consisting
+         of a set of sublists, each containing cell x and
+         a row y.
+
+  ; A three-cell oscillator.
+  (gol 20 20 '((10 10) (11 10) (12 10)))
+
+I've supplied several interesting seed patterns in "patterns.scm" that you
+can use. For example:
+
+  (load "patterns.scm")
+  (gol 18 18 koks-galaxy)
