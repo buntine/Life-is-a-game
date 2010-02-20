@@ -12,8 +12,7 @@
 ;;;
 ;;; Read about it on Wikipedia: http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
-;;; TODO: Refactor b-s-p-helper
-;;;       Enable way to kill app and (close-graphics)
+;;; TODO: Enable way to kill app and (close-graphics)
 ;;;       Experiment with drawing to a pixmap and then copying to viewport.
 ;;;       Write domain-specific wrappers for common procedures.
 
@@ -77,24 +76,27 @@
 (define (build-seed-pattern grid)
   (b-s-p-helper '() grid 0 0))
 
-(define (b-s-p-helper seed state x y)
-  (cond ((and (= (+ y 1) (rows state))
-              (= x (cells state)))
-           seed)
-        ((= x (cells state))
-           (b-s-p-helper seed state 0 (+ y 1)))
+(define (b-s-p-helper seed grid x y)
+  (cond ((end-of-grid? grid x y) seed)
+        ((end-of-row? grid x)
+          (b-s-p-helper seed grid 0 (+ y 1)))
         (else
-          (let ((cell (fetch-cell state x y))
-               (neighbours (cell-neighbours state x y)))
-            (b-s-p-helper (cond ((and (> neighbours 3) (= cell 1)) seed)
-                                ((and (< neighbours 2) (= cell 1)) seed)
-                                ((and (= neighbours 3) (= cell 0)) (cons (list x y) seed))
-                                ((and (> neighbours 1) (> 4 neighbours) (= cell 1)) (cons (list x y) seed))
-                                (else seed))
-                          state
-                          (+ x 1)
-                          y)))))
+          (let* ((c (fetch-cell grid x y))
+                 (n (cell-neighbours grid x y))
+                 (pattern (if (cell-lives? c n)
+                            (cons (list x y) seed)
+                            seed)))
+            (b-s-p-helper pattern grid (+ x 1) y)))))
 
+;;; Predicate, returns true if the given cell should live
+;;; onto the next evolution.
+(define (cell-lives? cell neighbours)
+  (cond ((and (> neighbours 3) (= cell 1)) #f)
+        ((and (< neighbours 2) (= cell 1)) #f)
+        ((and (= neighbours 3) (= cell 0)))
+        ((and (> neighbours 1) (> 4 neighbours) (= cell 1)))
+        (else #f)))
+ 
 ;;; Returns the value of the cell at position x y
 ;;; in the grid. If out-of-bounds, 0 is returned.
 (define (fetch-cell grid x y)
@@ -141,6 +143,15 @@
                   "white"))
          (posn (make-posn (* cw x) (* ch y))))
     ((draw-solid-rectangle vp) posn cw ch color)))
+
+;;; True if x*y represents the last cell in the grid.
+(define (end-of-grid? grid x y)
+  (and (= (+ y 1) (rows grid))
+       (= x (cells grid))))
+
+;;; True if x represents the last cell in any row.
+(define (end-of-row? grid x)
+  (= x (cells grid)))
 
 ;;; Main game loop.
 (define (mainloop grid vp)
