@@ -14,6 +14,7 @@
 
 ;;; TODO: Refactor b-s-p-helper
 ;;;       Enable way to kill app and (close-graphics)
+;;;       Experiment with drawing to a pixmap and then copying to viewport.
 ;;;       Write domain-specific wrappers for common procedures.
 
 (require (lib "graphics.ss" "graphics"))
