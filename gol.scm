@@ -14,12 +14,13 @@
 
 ;;; TODO: Refactor b-s-p-helper
 ;;;       Enable way to kill app and (close-graphics)
+;;;       Write domain-specific wrappers for common procedures.
 
 (require (lib "graphics.ss" "graphics"))
 
 (define *CELL_WIDTH* 5)
 (define *CELL_HEIGHT* 5)
-(define *REFRESH_RATE* .250)
+(define *REFRESH_RATE* .120)
 
 ;;; Given a grid, returns the number of available rows.
 (define (rows grid)
