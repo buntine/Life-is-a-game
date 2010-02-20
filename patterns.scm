@@ -5,11 +5,11 @@
 ;;; A suggested display size is noted as a comment above
 ;;; each pattern.
 
-;;; 5 * 5
-(define glider '((10 10) (11 10) (12 10) (12 9) (11 8)))
+;;; 20 * 20
+(define glider '((3 3) (4 3) (5 3) (5 2) (4 1)))
 
 ;;; 5 * 5
-(define blinker '((10 10) (11 10) (12 10)))
+(define blinker '((2 2) (3 2) (4 2)))
 
 ;;; 40 * 40 (or more)
 (define gospers-glider-gun '((3 6) (4 6) (3 7) (4 7) (13 6) (13 7) (13 8) (14 5)
