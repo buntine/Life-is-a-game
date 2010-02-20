@@ -12,7 +12,7 @@
 ;;;
 ;;; Read about it on Wikipedia: http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
 
-;;; TODO: Refactor cell-neighbours and b-s-p-helper
+;;; TODO: Refactor b-s-p-helper
 ;;;       Enable way to kill app and (close-graphics)
 
 (require (lib "graphics.ss" "graphics"))
@@ -72,8 +72,8 @@
 
 ;;; Builds a new seed pattern in relation to the current
 ;;; game state.
-(define (build-seed-pattern state)
-  (b-s-p-helper '() state 0 0))
+(define (build-seed-pattern grid)
+  (b-s-p-helper '() grid 0 0))
 
 (define (b-s-p-helper seed state x y)
   (cond ((and (= (+ y 1) (rows state))
@@ -103,15 +103,14 @@
 ;;; Returns the number of live neighbours for the
 ;;; cell at the given coordinates.
 (define (cell-neighbours grid x y)
-  (let ((neighbours (list (fetch-cell grid (- x 1) (- y 1))
-                    (fetch-cell grid x (- y 1))
-                    (fetch-cell grid (+ x 1) (- y 1))
-                    (fetch-cell grid (- x 1) (+ y 1))
-                    (fetch-cell grid x (+ y 1))
-                    (fetch-cell grid (+ x 1) (+ y 1))
-                    (fetch-cell grid (- x 1) y)
-                    (fetch-cell grid (+ x 1) y))))
-    (apply + neighbours)))
+  (let ((neighbours-sum (lambda (row)
+                          (+ (fetch-cell grid (- x 1) row)
+                             (fetch-cell grid x row)
+                             (fetch-cell grid (+ x 1) row)))))
+    (+ (fetch-cell grid (- x 1) y)
+       (fetch-cell grid (+ x 1) y)
+       (neighbours-sum (- y 1))
+       (neighbours-sum (+ y 1)))))
 
 ;;; Renders the universe, depicting the current state.
 (define (render-universe grid vp)
@@ -134,8 +133,7 @@
          (color (if (= health 1)
                   "black"
                   "white"))
-         (posn (make-posn (* cw x)
-                          (* ch y))))
+         (posn (make-posn (* cw x) (* ch y))))
     ((draw-solid-rectangle vp) posn cw ch color)))
 
 ;;; Main game loop.
