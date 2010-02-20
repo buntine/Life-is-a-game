@@ -86,7 +86,7 @@
                (neighbours (cell-neighbours state x y)))
             (b-s-p-helper (cond ((and (> neighbours 3) (= cell 1)) seed)
                                 ((and (< neighbours 2) (= cell 1)) seed)
-                                ((and (>= neighbours 3) (= cell 0)) (cons (list x y) seed))
+                                ((and (= neighbours 3) (= cell 0)) (cons (list x y) seed))
                                 ((and (> neighbours 1) (> 4 neighbours) (= cell 1)) (cons (list x y) seed))
                                 (else seed))
                           state
