@@ -41,29 +41,28 @@
 ;;; Creates a grid and populates it as per the given
 ;;; seed pattern for the next evolution.
 (define (update-seed cells rows seed)
-  (build-grid cells (make-vector rows 0) 0 seed))
+  (build-grid cells (new-grid rows) 0 seed))
 
 ;;; Builds the full grid as per the supplied
 ;;; width, height and seed pattern.
-(define (build-grid cells rows curr-row seed)
-  (vector-set! rows
-               curr-row
-               (populate-row (make-vector cells 0)
-                             0
-                             curr-row
-                             seed))
-  (if (= (vector-length rows) (+ curr-row 1))
-    rows
-    (build-grid cells rows (+ curr-row 1) seed)))
+(define (build-grid cells rows index seed)
+  (let ((row (populate-row (new-row cells)
+                           0
+                           index
+                           seed)))
+    (vector-set! rows index row)
+    (if (= (vector-length rows) (+ index 1))
+      rows
+      (build-grid cells rows (+ index 1) seed))))
 
 ;;; Populates a given row in the grid given
 ;;; the initial seed pattern.
-(define (populate-row row curr-cell curr-row seed)
-  (if (= curr-cell (vector-length row))
+(define (populate-row row cell-index row-index seed)
+  (if (= cell-index (vector-length row))
     row
-    (let ((health (if (member (list curr-cell curr-row) seed) 1 0)))
-      (vector-set! row curr-cell health)
-      (populate-row row (+ curr-cell 1) curr-row seed))))
+    (let ((health (if (member (list cell-index row-index) seed) 1 0)))
+      (vector-set! row cell-index health)
+      (populate-row row (+ cell-index 1) row-index seed))))
 
 ;;; Returns the next generation given the current state.
 (define (next-generation grid)
@@ -91,10 +90,10 @@
 ;;; Predicate, returns true if the given cell should live
 ;;; onto the next evolution.
 (define (cell-lives? cell neighbours)
-  (cond ((and (> neighbours 3) (= cell 1)) #f)
-        ((and (< neighbours 2) (= cell 1)) #f)
-        ((and (= neighbours 3) (= cell 0)))
-        ((and (> neighbours 1) (> 4 neighbours) (= cell 1)))
+  (cond ((and (> neighbours 3) (alive? cell)) #f)
+        ((and (< neighbours 2) (alive? cell)) #f)
+        ((and (= neighbours 3) (dead? cell)))
+        ((and (> neighbours 1) (> 4 neighbours) (alive? cell)))
         (else #f)))
  
 ;;; Returns the value of the cell at position x y
@@ -153,6 +152,18 @@
 (define (end-of-row? grid x)
   (= x (cells grid)))
 
+(define (alive? cell)
+  (= cell 1))
+
+(define (dead? cell)
+  (= cell 0))
+
+(define (new-row len)
+  (make-vector len 0))
+
+(define (new-grid len)
+  (new-row len))
+
 ;;; Main game loop.
 (define (mainloop grid vp)
   (render-universe grid vp)
@@ -161,7 +172,7 @@
 
 ;;; Initialization procedure, accepts width, height and
 ;;; an initial seed pattern in the form of a list of
-;;; two-element lists.
+;;; two-element sublists.
 ;;;
 ;;; Example: (gol 40 40 '((22 2) (23 2) (22 3) (23 3)))
 (define (gol cells rows seed)
