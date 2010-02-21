@@ -11,16 +11,23 @@
 ;;; and observing how it evolves.
 ;;;
 ;;; Read about it on Wikipedia: http://en.wikipedia.org/wiki/Conway%27s_Game_of_Life
-
-;;; TODO: Enable way to kill app and (close-graphics)
-;;;       Experiment with drawing to a pixmap and then copying to viewport.
-;;;       Write domain-specific wrappers for common procedures.
+;;;
+;;; Usage:
+;;;
+;;;   (gol 20 20 '((10 10) (11 10) (12 10) (13 10) (14 10) (11 10)))
+;;;
+;;; Press any key to exit.
+;;;
+;;; TODO: Experiment with drawing to a pixmap and then copying to viewport.
+;;;       Write (more) domain-specific wrappers for common procedures.
 
 (require (lib "graphics.ss" "graphics"))
 
 (define *CELL_WIDTH* 5)
 (define *CELL_HEIGHT* 5)
 (define *REFRESH_RATE* .120)
+
+(define play #t)
 
 ;;; Given a grid, returns the number of available rows.
 (define (rows grid)
@@ -31,12 +38,16 @@
 (define (cells grid)
   (vector-length (vector-ref grid 0)))
 
-;;; Initializes the graphics viewport.
+;;; Initializes the graphics viewport and key-event
+;;; bindings.
 (define (initialize cells rows)
   (open-graphics)
-  (open-viewport "Conway's Game of Life"
-                 (* cells *CELL_WIDTH*)
-                 (* rows *CELL_HEIGHT*)))
+  (let ((vp (open-viewport "Conway's Game of Life"
+                           (* cells *CELL_WIDTH*)
+                           (* rows *CELL_HEIGHT*))))
+    (set! play #t)
+    ((set-on-key-event vp) (lambda (ke v) (set! play #f)))
+    vp))
 
 ;;; Creates a grid and populates it as per the given
 ;;; seed pattern for the next evolution.
@@ -168,7 +179,9 @@
 (define (mainloop grid vp)
   (render-universe grid vp)
   (sleep/yield *REFRESH_RATE*)
-  (mainloop (next-generation grid) vp))
+  (if play
+    (mainloop (next-generation grid) vp)
+    (close-graphics)))
 
 ;;; Initialization procedure, accepts width, height and
 ;;; an initial seed pattern in the form of a list of

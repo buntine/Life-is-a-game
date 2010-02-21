@@ -29,6 +29,8 @@ Usage:
   ; A three-cell oscillator.
   (gol 20 20 '((10 10) (11 10) (12 10)))
 
+Press any key to exit during the game.
+
 I've supplied several interesting seed patterns in "patterns.scm" that you
 can use. For example:
 
