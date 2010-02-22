@@ -16,7 +16,7 @@
 ;;;
 ;;;   (gol 20 20 '((10 10) (11 10) (12 10) (13 10) (14 10) (11 10)))
 ;;;
-;;; Press any key to exit.
+;;; Press ESC during game to exit.
 ;;;
 ;;; TODO: Experiment with drawing to a pixmap and then copying to viewport.
 ;;;       Write (more) domain-specific wrappers for common procedures.
@@ -46,7 +46,9 @@
                            (* cells *CELL_WIDTH*)
                            (* rows *CELL_HEIGHT*))))
     (set! play #t)
-    ((set-on-key-event vp) (lambda (ke v) (set! play #f)))
+    ((set-on-key-event vp) (lambda (ke v)
+                             (if (equal? (key-value ke) 'escape)
+                               (set! play #f))))
     vp))
 
 ;;; Creates a grid and populates it as per the given
