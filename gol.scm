@@ -17,9 +17,6 @@
 ;;;   (gol 20 20 '((10 10) (11 10) (12 10) (13 10) (14 10) (11 10)))
 ;;;
 ;;; Press ESC during game to exit.
-;;;
-;;; TODO: Experiment with drawing to a pixmap and then copying to viewport.
-;;;       Write (more) domain-specific wrappers for common procedures.
 
 (require (lib "graphics.ss" "graphics"))
 

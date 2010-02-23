@@ -1,6 +1,8 @@
 Conway's Game of Life
 By Andrew Buntine.
 
+ABOUT
+
 Implemented in PLT Scheme and viewport over the course of a few warm
 Melbourne evenings, early 2010.
 
@@ -22,7 +24,8 @@ My implementation accepts:
          of a set of sublists, each containing a cell x and
          a row y.
 
-Usage:
+
+USAGE
 
   (load "gol.scm")
 
@@ -36,3 +39,12 @@ can use. For example:
 
   (load "patterns.scm")
   (gol 18 18 koks-galaxy)
+
+
+TODO
+
+ - Experiment with drawing to a pixmap and then copying to viewport.
+ - Don't generate a new vector each evolution. Do it once, and then modify.
+ - Write (more) domain-specific wrappers for common procedures.
+
+
