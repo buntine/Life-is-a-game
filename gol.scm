@@ -20,9 +20,13 @@
 
 (require (lib "graphics.ss" "graphics"))
 
+
+;;;; max-x and max-y SHOULD ACTUALLY WORK
+;;;; render-universe SHOULD BUILD FROM SEED PATTERN, RECURSIVELY.
+
 (define *CELL_WIDTH* 5)
 (define *CELL_HEIGHT* 5)
-(define *REFRESH_RATE* .120)
+(define *REFRESH_RATE* .050)
 
 (define play #t)
 
@@ -75,27 +79,60 @@
       (populate-row row (+ cell-index 1) row-index seed))))
 
 ;;; Returns the next generation given the current state.
-(define (next-generation grid)
-  (update-seed (cells grid)
-               (rows grid)
-               (build-seed-pattern grid)))
+(define (next-generation grid seed)
+  (let ((new-seed (build-seed-pattern grid seed)))
+    (list (update-seed (cells grid)
+                       (rows grid)
+                       new-seed)
+          new-seed)))
 
 ;;; Builds a new seed pattern in relation to the current
 ;;; game state.
-(define (build-seed-pattern grid)
-  (b-s-p-helper '() grid 0 0))
+(define (build-seed-pattern grid seed)
+  (display (length seed))
+  (display ",")
+  (b-s-p-helper '() grid seed))
 
-(define (b-s-p-helper seed grid x y)
-  (cond ((end-of-grid? grid x y) seed)
-        ((end-of-row? grid x)
-          (b-s-p-helper seed grid 0 (+ y 1)))
-        (else
-          (let* ((c (fetch-cell grid x y))
-                 (n (cell-neighbours grid x y))
-                 (pattern (if (cell-lives? c n)
-                            (cons (list x y) seed)
-                            seed)))
-            (b-s-p-helper pattern grid (+ x 1) y)))))
+(define (b-s-p-helper new-seed grid old-seed)
+  (if (null? old-seed)
+    new-seed
+    (let ((x (car (car old-seed)))
+          (y (cadr (car old-seed))))
+      (b-s-p-helper (append new-seed
+                            (inspect-block '() grid `((,(- x 1) ,(- y 1))
+                                                      (,x ,(- y 1))
+                                                      (,(+ x 1) ,(- y 1))
+                                                      (,(- x 1) ,y)
+                                                      (,x ,y)
+                                                      (,(+ x 1) ,y)
+                                                      (,(- x 1) ,(+ y 1))
+                                                      (,x ,(+ y 1))
+                                                      (,(+ x 1) ,(+ y 1))) new-seed))
+                    grid
+                    (cdr old-seed)))))
+
+(define (inspect-block healthy grid cells seed)
+  (if (null? cells)
+    healthy
+    (let* ((x (car (car cells)))
+           (y (cadr (car cells)))
+           (c (fetch-cell grid x y))
+           (n (cell-neighbours grid x y))
+           (pattern (if (and (not (member (car cells) seed)) (cell-lives? c n))
+                      (cons (car cells) healthy)
+                      healthy)))
+      (inspect-block pattern grid (cdr cells) seed))))
+
+;  (cond ((end-of-grid? grid x y) seed)
+;        ((end-of-row? grid x)
+;          (b-s-p-helper seed grid 0 (+ y 1)))
+;        (else
+;          (let* ((c (fetch-cell grid x y))
+;                 (n (cell-neighbours grid x y))
+;                 (pattern (if (cell-lives? c n)
+;                            (cons (list x y) seed)
+;                            seed)))
+;            (b-s-p-helper pattern grid (+ x 1) y)))))
 
 ;;; Predicate, returns true if the given cell should live
 ;;; onto the next evolution.
@@ -130,8 +167,17 @@
      (fetch-cell grid (+ x 1) y)))
 
 ;;; Renders the universe, depicting the current state.
-(define (render-universe grid vp)
-  (r-u-helper grid 0 0 vp))
+(define (render-universe seed vp)
+  (if (null? seed)
+    #t
+    (let* ((cw *CELL_WIDTH*)
+           (ch *CELL_HEIGHT*)
+           (x (car (car seed)))
+           (y (cadr (car seed)))
+           (posn (make-posn (* cw x) (* ch y))))
+      ((draw-solid-rectangle vp) posn cw ch "black")
+      (render-universe (cdr seed) vp))))
+;  (r-u-helper grid 0 0 vp))
 
 (define (r-u-helper grid x y vp)
   (cond ((>= y (rows grid)) #t)
@@ -175,11 +221,12 @@
   (new-row len))
 
 ;;; Main game loop.
-(define (mainloop grid vp)
-  (render-universe grid vp)
+(define (mainloop grid seed vp)
+  ((clear-viewport vp))
+  (render-universe seed vp)
   (sleep/yield *REFRESH_RATE*)
   (if play
-    (mainloop (next-generation grid) vp)
+    (apply mainloop `(,@(next-generation grid seed) ,vp))
     (close-graphics)))
 
 ;;; Initialization procedure, accepts width, height and
@@ -189,4 +236,5 @@
 ;;; Example: (gol 40 40 '((22 2) (23 2) (22 3) (23 3)))
 (define (gol cells rows seed)
   (mainloop (update-seed cells rows seed)
+            seed
             (initialize cells rows)))
