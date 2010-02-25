@@ -145,18 +145,9 @@
 ;;; Returns the number of live neighbours for the
 ;;; cell at the given coordinates.
 (define (cell-neighbours grid x y)
-  (- (+ (rl-cell grid x (- y 1))
-        (rl-cell grid x y)
-        (rl-cell grid x (+ y 1)))
-     (fetch-cell grid x y)))
-
-;;; A helper function to cell-neighbours. Returns
-;;; the combined values of the cells at (x-1)*y, x*y
-;;; and x+1*y
-(define (rl-cell grid x y)
-  (+ (fetch-cell grid (- x 1) y)
-     (fetch-cell grid x y)
-     (fetch-cell grid (+ x 1) y)))
+  (let ((cell-value (lambda (pos) (fetch-cell grid (car pos) (cadr pos)))))
+    (- (apply + (map cell-value (grid-block x y)))
+       (fetch-cell grid x y))))
 
 ;;; Renders the universe, depicting the current state.
 (define (render-universe seed vp)
