@@ -26,15 +26,6 @@
 
 (define play #t)
 
-;;; Given a grid, returns the number of available rows.
-(define (rows grid)
-  (vector-length grid))
-
-;;; Given a grid, returns the number of available cells
-;;; per row.
-(define (cells grid)
-  (vector-length (vector-ref grid 0)))
-
 ;;; Initializes the graphics viewport and key-event
 ;;; bindings.
 (define (initialize cells rows)
@@ -56,7 +47,7 @@
 ;  (build-grid cells (new-grid rows) 0 seed))
 
 (define (build-grid rows row-width index)
-  (if (= (vector-length rows) (+ index 1))
+  (if (= (vector-length rows) index)
     rows
     (begin
       (vector-set! rows index (new-row row-width))
@@ -155,7 +146,7 @@
 ;;; Returns the value of the cell at position x y
 ;;; in the grid. If out-of-bounds, 0 is returned.
 (define (fetch-cell grid x y)
-  (if (or (< x 0) (< y 0) (>= x (cells grid)) (>= y (rows grid)))
+  (if (or (< x 0) (< y 0) (>= (+ x 1) (cells grid)) (>= (+ y 1) (rows grid)))
     0
     (vector-ref (vector-ref grid y) x)))
 
@@ -204,6 +195,15 @@
 
 (define (new-grid len)
   (new-row len))
+
+;;; Given a grid, returns the number of available rows.
+(define (rows grid)
+  (vector-length grid))
+
+;;; Given a grid, returns the number of available cells
+;;; per row.
+(define (cells grid)
+  (vector-length (vector-ref grid 0)))
 
 ;;; Main game loop.
 (define (mainloop grid seed vp)
