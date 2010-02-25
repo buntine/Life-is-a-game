@@ -170,17 +170,6 @@
       ((draw-solid-rectangle vp) posn cw ch "black")
       (render-universe (cdr seed) vp))))
 
-;;; Renders a cell to be either alive or dead, depending
-;;; the the value of 'health'.
-(define (render-cell health x y vp)
-  (let* ((cw *CELL_WIDTH*)
-         (ch *CELL_HEIGHT*)
-         (color (if (= health 1)
-                  "black"
-                  "white"))
-         (posn (make-posn (* cw x) (* ch y))))
-    ((draw-solid-rectangle vp) posn cw ch color)))
-
 ;;; True if x*y represents the last cell in the grid.
 (define (end-of-grid? grid x y)
   (and (= (+ y 1) (rows grid))
