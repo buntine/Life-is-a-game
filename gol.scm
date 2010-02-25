@@ -51,28 +51,45 @@
 ;;; Creates a grid and populates it as per the given
 ;;; seed pattern for the next evolution.
 (define (update-grid cells rows seed)
-  (build-grid cells (new-grid rows) 0 seed))
+  (let ((grid (build-grid (new-grid rows) cells 0)))
+    (populate grid seed)))
+;  (build-grid cells (new-grid rows) 0 seed))
+
+(define (build-grid rows row-width index)
+  (if (= (vector-length rows) (+ index 1))
+    rows
+    (begin
+      (vector-set! rows index (new-row row-width))
+      (build-grid rows row-width (+ index 1)))))
 
 ;;; Builds the full grid as per the supplied
 ;;; width, height and seed pattern.
-(define (build-grid cells rows index seed)
-  (let ((row (populate-row (new-row cells)
-                           0
-                           index
-                           seed)))
-    (vector-set! rows index row)
-    (if (= (vector-length rows) (+ index 1))
-      rows
-      (build-grid cells rows (+ index 1) seed))))
+;(define (build-grid cells rows index seed)
+;  (let ((row (populate-row (new-row cells)
+;                           0
+;                           index
+;                           seed)))
+;    (vector-set! rows index row)
+;    (if (= (vector-length rows) (+ index 1))
+;      rows
+;      (build-grid cells rows (+ index 1) seed))))
+
+(define (populate grid seed)
+  (if (null? seed)
+    grid
+    (let ((x (car-x seed))
+          (y (car-y seed)))
+      (vector-set! (vector-ref grid y) x 1)
+      (populate grid (cdr seed)))))
 
 ;;; Populates a given row in the grid given
 ;;; the initial seed pattern.
-(define (populate-row row cell-index row-index seed)
-  (if (= cell-index (vector-length row))
-    row
-    (let ((health (if (member (list cell-index row-index) seed) 1 0)))
-      (vector-set! row cell-index health)
-      (populate-row row (+ cell-index 1) row-index seed))))
+;(define (populate-row row cell-index row-index seed)
+;  (if (= cell-index (vector-length row))
+;    row
+;    (let ((health (if (member (list cell-index row-index) seed) 1 0)))
+;      (vector-set! row cell-index health)
+;      (populate-row row (+ cell-index 1) row-index seed))))
 
 ;;; Returns the next generation, in the form of the new grid
 ;;; and seed, given the current state.
