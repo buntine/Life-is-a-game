@@ -20,10 +20,6 @@
 
 (require (lib "graphics.ss" "graphics"))
 
-
-;;;; max-x and max-y SHOULD ACTUALLY WORK
-;;;; render-universe SHOULD BUILD FROM SEED PATTERN, RECURSIVELY.
-
 (define *CELL_WIDTH* 5)
 (define *CELL_HEIGHT* 5)
 (define *REFRESH_RATE* .050)
@@ -54,7 +50,7 @@
 
 ;;; Creates a grid and populates it as per the given
 ;;; seed pattern for the next evolution.
-(define (update-seed cells rows seed)
+(define (update-grid cells rows seed)
   (build-grid cells (new-grid rows) 0 seed))
 
 ;;; Builds the full grid as per the supplied
@@ -78,10 +74,11 @@
       (vector-set! row cell-index health)
       (populate-row row (+ cell-index 1) row-index seed))))
 
-;;; Returns the next generation given the current state.
+;;; Returns the next generation, in the form of the new grid
+;;; and seed, given the current state.
 (define (next-generation grid seed)
   (let ((new-seed (build-seed-pattern grid seed)))
-    (list (update-seed (cells grid)
+    (list (update-grid (cells grid)
                        (rows grid)
                        new-seed)
           new-seed)))
@@ -89,50 +86,45 @@
 ;;; Builds a new seed pattern in relation to the current
 ;;; game state.
 (define (build-seed-pattern grid seed)
-  (display (length seed))
-  (display ",")
   (b-s-p-helper '() grid seed))
 
 (define (b-s-p-helper new-seed grid old-seed)
   (if (null? old-seed)
     new-seed
-    (let ((x (car (car old-seed)))
-          (y (cadr (car old-seed))))
+    (let ((x (car-x old-seed))
+          (y (car-y old-seed)))
       (b-s-p-helper (append new-seed
-                            (inspect-block '() grid `((,(- x 1) ,(- y 1))
-                                                      (,x ,(- y 1))
-                                                      (,(+ x 1) ,(- y 1))
-                                                      (,(- x 1) ,y)
-                                                      (,x ,y)
-                                                      (,(+ x 1) ,y)
-                                                      (,(- x 1) ,(+ y 1))
-                                                      (,x ,(+ y 1))
-                                                      (,(+ x 1) ,(+ y 1))) new-seed))
+                            (inspect-block '() grid (grid-block x y) new-seed))
                     grid
                     (cdr old-seed)))))
 
+;;; Returns a list containing the locations for all neighbouring
+;;; cells of the cell at x*y.
+(define (grid-block x y)
+  `((,(- x 1) ,(- y 1))
+    (,x ,(- y 1))
+    (,(+ x 1) ,(- y 1))
+    (,(- x 1) ,y)
+    (,x ,y)
+    (,(+ x 1) ,y)
+    (,(- x 1) ,(+ y 1))
+    (,x ,(+ y 1))
+    (,(+ x 1) ,(+ y 1))))
+
+;;; Inspects a nine-cell block and returns a list of x*y for those
+;;; that should live on to the next generation.
 (define (inspect-block healthy grid cells seed)
   (if (null? cells)
     healthy
-    (let* ((x (car (car cells)))
-           (y (cadr (car cells)))
+    (let* ((x (car-x cells))
+           (y (car-y cells))
            (c (fetch-cell grid x y))
            (n (cell-neighbours grid x y))
-           (pattern (if (and (not (member (car cells) seed)) (cell-lives? c n))
+           (pattern (if (and (not (member (car cells) seed))
+                             (cell-lives? c n))
                       (cons (car cells) healthy)
                       healthy)))
       (inspect-block pattern grid (cdr cells) seed))))
-
-;  (cond ((end-of-grid? grid x y) seed)
-;        ((end-of-row? grid x)
-;          (b-s-p-helper seed grid 0 (+ y 1)))
-;        (else
-;          (let* ((c (fetch-cell grid x y))
-;                 (n (cell-neighbours grid x y))
-;                 (pattern (if (cell-lives? c n)
-;                            (cons (list x y) seed)
-;                            seed)))
-;            (b-s-p-helper pattern grid (+ x 1) y)))))
 
 ;;; Predicate, returns true if the given cell should live
 ;;; onto the next evolution.
@@ -172,21 +164,11 @@
     #t
     (let* ((cw *CELL_WIDTH*)
            (ch *CELL_HEIGHT*)
-           (x (car (car seed)))
-           (y (cadr (car seed)))
+           (x (car-x seed))
+           (y (car-y seed))
            (posn (make-posn (* cw x) (* ch y))))
       ((draw-solid-rectangle vp) posn cw ch "black")
       (render-universe (cdr seed) vp))))
-;  (r-u-helper grid 0 0 vp))
-
-(define (r-u-helper grid x y vp)
-  (cond ((>= y (rows grid)) #t)
-        ((>= x (cells grid))
-          (r-u-helper grid 0 (+ y 1) vp))
-        (else
-          (let ((health (fetch-cell grid x y)))
-            (render-cell health x y vp)
-            (r-u-helper grid (+ x 1) y vp)))))
 
 ;;; Renders a cell to be either alive or dead, depending
 ;;; the the value of 'health'.
@@ -214,6 +196,12 @@
 (define (dead? cell)
   (= cell 0))
 
+(define (car-x seed)
+  (car (car seed)))
+
+(define (car-y seed)
+  (cadr (car seed)))
+
 (define (new-row len)
   (make-vector len 0))
 
@@ -235,6 +223,6 @@
 ;;;
 ;;; Example: (gol 40 40 '((22 2) (23 2) (22 3) (23 3)))
 (define (gol cells rows seed)
-  (mainloop (update-seed cells rows seed)
+  (mainloop (update-grid cells rows seed)
             seed
             (initialize cells rows)))
