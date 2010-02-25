@@ -43,5 +43,6 @@ can use. For example:
 
 TODO
 
+ - Fix bug with final row and cell (never gets accessed, probably due to indexing).
  - Experiment with drawing to a pixmap and then copying to viewport.
  - Write (more) domain-specific wrappers for common procedures.
