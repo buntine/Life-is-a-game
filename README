@@ -38,13 +38,10 @@ I've supplied several interesting seed patterns in "patterns.scm" that you
 can use. For example:
 
   (load "patterns.scm")
-  (gol 18 18 koks-galaxy)
+  (gol 50 50 koks-galaxy)
 
 
 TODO
 
  - Experiment with drawing to a pixmap and then copying to viewport.
- - Don't generate a new vector each evolution. Do it once, and then modify.
  - Write (more) domain-specific wrappers for common procedures.
-
-
