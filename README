@@ -40,6 +40,10 @@ can use. For example:
   (load "patterns.scm")
   (gol 50 50 koks-galaxy)
 
+To speed/slow the evolutions, just set the refresh rate (it defaults to .070):
+
+  (set! *REFRESH_RATE* .020)
+
 
 TODO
 
