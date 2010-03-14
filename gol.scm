@@ -35,8 +35,11 @@
                            (* rows *CELL_HEIGHT*))))
     (set! play #t)
     ((set-on-key-event vp) (lambda (ke v)
-                             (if (equal? (key-value ke) 'escape)
-                               (set! play #f))))
+                             (let ((key-val (key-value ke)))
+                               (cond ((equal? key-val 'escape)
+                                       (set! play #f))
+                                     ((equal? key-val #\s)
+                                       ((save-pixmap vp) "gol.xpm"))))))
     vp))
 
 ;;; Creates a grid and populates it as per the given
