@@ -34,13 +34,18 @@
                            (* cells *CELL_WIDTH*)
                            (* rows *CELL_HEIGHT*))))
     (set! play #t)
-    ((set-on-key-event vp) (lambda (ke v)
-                             (let ((key-val (key-value ke)))
-                               (cond ((equal? key-val 'escape)
-                                       (set! play #f))
-                                     ((equal? key-val #\s)
-                                       ((save-pixmap vp) "gol.xpm"))))))
+    ((set-on-key-event vp) (key-event-handler vp))
     vp))
+
+;;; Builds and eeturns a procedure for use as a
+;;; key-event handler.
+(define (key-event-handler vp)
+  (lambda (ke v)
+    (let ((key-val (key-value ke)))
+      (cond ((equal? key-val 'escape)
+              (set! play #f))
+            ((equal? key-val #\s)
+              ((save-pixmap vp) "gol.xpm"))))))
 
 ;;; Creates a grid and populates it as per the given
 ;;; seed pattern for the next evolution.
