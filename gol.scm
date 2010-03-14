@@ -27,12 +27,13 @@
 (define play #t)
 
 ;;; Initializes the graphics viewport and key-event
-;;; bindings.
+;;; bindings. The additional 20 pixels on the height
+;;; is to make room for the generation counter.
 (define (initialize cells rows)
   (open-graphics)
   (let ((vp (open-viewport "Conway's Game of Life"
                            (* cells *CELL_WIDTH*)
-                           (* rows *CELL_HEIGHT*))))
+                           (+ (* rows *CELL_HEIGHT*) 20))))
     (set! play #t)
     ((set-on-key-event vp) (key-event-handler vp))
     vp))
@@ -190,13 +191,22 @@
 (define (cells grid)
   (vector-length (vector-ref grid 0)))
 
+;;; Prints the current generation to the viewport.
+;;; Return value is unspecified.
+(define (update-gen-counter vp gen grid)
+  ((draw-string vp)
+    (make-posn 3 (+ (* (rows grid) *CELL_HEIGHT*) 17))
+    (string-append "Generation: "
+                   (number->string gen))))
+
 ;;; Main game loop.
-(define (mainloop grid seed vp)
+(define (mainloop grid seed vp gen)
   ((clear-viewport vp))
+  (update-gen-counter vp gen grid)
   (render-universe seed vp)
   (sleep/yield *REFRESH_RATE*)
   (if play
-    (apply mainloop `(,@(next-generation grid seed) ,vp))
+    (apply mainloop `(,@(next-generation grid seed) ,vp ,(+ gen 1)))
     (close-graphics)))
 
 ;;; Initialization procedure, accepts width, height and
@@ -207,4 +217,4 @@
 (define (gol cells rows seed)
   (mainloop (update-grid cells rows seed)
             seed
-            (initialize cells rows)))
+            (initialize cells rows) 0))
